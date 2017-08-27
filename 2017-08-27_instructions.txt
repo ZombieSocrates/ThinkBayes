@@ -1,0 +1,9 @@
+For the exercise at the end of chapter 3.
+
+He had been assuming that there is only one company operating, and then showed that the number N of locomotives could be modelled by a power law distribution (less sensitive to where you choose N than the uniform random distribution).
+
+The exercise now assumes that there are an unknown number of companies operating in the region. Not only are you asked to estimate the total size of the fleet N, you also need to guess which company the train belongs to. Companies with more trains are more likely to supply the locomotive you see.
+
+I feel like all you would need to do here is model the likelihood of seeing a company with N trains. Looking at train.py, train2.py, and train3.py should be helpful with this.
+
+This would allow me to say something like "OK, I see a train with number K. What's the likelihood that that train came from a company with N trains?"
