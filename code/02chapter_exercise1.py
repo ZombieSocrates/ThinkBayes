@@ -93,7 +93,7 @@ def main():
     pmf = Cookie(hypos)
 
     dataset = ['vanilla','chocolate','vanilla']
-    replacement = True
+    replacement = False
     for data in dataset:
         # print 'Bowl 1: Chocolate {}, Vanilla {}'.format(pmf.B1.chocolate, pmf.B1.vanilla)
         # print 'Bowl 2: Chocolate {}, Vanilla {}'.format(pmf.B2.chocolate, pmf.B2.vanilla)
