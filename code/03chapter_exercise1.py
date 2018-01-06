@@ -50,23 +50,23 @@ class OneCompanyTrain2(Dice):
 
 class ManyCompanyTrain2(OneCompanyTrain2):
 
-    def __init__(self, hypos, alpha=1.0):
-        """The only difference from the OneCompany variant above
-        is that the prior probability of each hypothesis is scaled
-        by hypo/sum(hypos). This represents the likelihood that
-        the train we see comes from a company with N trains.
+    def __init__(self, hypos):
+        """UPDATE THIS DOCSTRING
 
-        What this ends up reducing to, however, is a uniform prior,
-        because sum(hypos) just ends up getting normalized away.
-
-        hypos: sequence of hypotheses
-        alpha: parameter of the power law prior
+        hypos: sequence of hypotheses representing possible company sizes
         """
         Pmf.__init__(self)
-        self.alpha = alpha
         for hypo in hypos:
-            self.Set(hypo, hypo**(-alpha) * hypo/sum(hypos))
+            self.Set(hypo, int(max(hypos)/hypo) * hypo)
         self.Normalize()
+
+    def Likelihood(self, data, hypo):
+        '''Right now, this breaks the update function
+        '''
+        # if hypo < data:
+        #     return 0
+        # else:
+        #     return int(max(self.Values())/hypo)
 
 
 def MakePosterior(high, dataset, constructor):
@@ -116,5 +116,7 @@ def ComparePriors(constructors, labels, \
                 ylabel='Probability')
 
 if __name__ == '__main__':
-    ComparePriors(constructors = [OneCompanyTrain2, ManyCompanyTrain2], \
-                  labels = ['One Company Power Law', 'Many Company Power Law'])
+    foo_bar = ManyCompanyTrain2(hypos = [i for i in range(1,11)])
+    ipdb.set_trace()
+    # ComparePriors(constructors = [OneCompanyTrain2, ManyCompanyTrain2], \
+    #               labels = ['One Company Power Law', 'Many Company Power Law'])
