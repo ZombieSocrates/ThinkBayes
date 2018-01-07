@@ -61,12 +61,10 @@ class ManyCompanyTrain2(OneCompanyTrain2):
         self.Normalize()
 
     def Likelihood(self, data, hypo):
-        '''Right now, this breaks the update function
-        '''
-        # if hypo < data:
-        #     return 0
-        # else:
-        #     return int(max(self.Values())/hypo)
+        if hypo < data:
+            return 0
+        else:
+            return int(max(self.Values())/hypo)
 
 
 def MakePosterior(high, dataset, constructor):
@@ -116,7 +114,7 @@ def ComparePriors(constructors, labels, \
                 ylabel='Probability')
 
 if __name__ == '__main__':
-    foo_bar = ManyCompanyTrain2(hypos = [i for i in range(1,11)])
-    ipdb.set_trace()
-    # ComparePriors(constructors = [OneCompanyTrain2, ManyCompanyTrain2], \
-    #               labels = ['One Company Power Law', 'Many Company Power Law'])
+    # foo_bar = ManyCompanyTrain2(hypos = [i for i in range(1,11)])
+    # ipdb.set_trace()
+    ComparePriors(constructors = [OneCompanyTrain2, ManyCompanyTrain2], \
+                  labels = ['One Company Power Law', 'Many Company Power Law'])
