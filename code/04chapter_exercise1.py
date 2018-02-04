@@ -4,6 +4,7 @@ import thinkplot
 from random import uniform
 from collections import Counter
 
+import numpy as np
 import ipdb
 
 
@@ -19,7 +20,15 @@ How does the spread of the posterior distribution depend on y?
 
 A lot of this I was basically able to copy over from `euro.py`. The main thing
 that I changed was the RunUpdate method, so that it will make errors according
-to whatever value of y I set
+to whatever value of y I set. I also printed the variance of each PMF.
+
+
+My answer to the main question that they pose: The spread of either the uniform
+or triangular posterior seems relatively independent of the error rate. The
+90% CI is basically the same width whether the error rate is 0.1, 0.5, or 0.9.
+
+The error mostly just produces linear shifts of each posterior curve, which
+causes the coin to sometimes appear unbiased and sometimes appear biased
 '''
 
 class Euro(thinkbayes.Suite):
@@ -64,18 +73,21 @@ def RunUpdate(suite, error_prob, heads=140, tails=110):
     dataset = 'H' * heads + 'T' * tails
 
     for data in dataset:
-    	err = uniform(0,1) <= error_prob
-    	if (err and data == 'H') or (not err and data =='T'):
-        	suite.Update('T')
+        err = uniform(0,1) <= error_prob
+        if (err and data == 'H') or (not err and data =='T'):
+            suite.Update('T')
         else:
-        	suite.Update('H')
+            suite.Update('H')
 
 
 def Summarize(suite):
-    """Prints summary statistics for the suite."""
+    """Prints summary statistics for the suite. Because the questions asks
+    how the spread of the posterior distribution changes with the error
+    rate, I'm also showing the variance"""
     print '\tProbability of 50', suite.Prob(50)
     print '\tMLE', suite.MaximumLikelihood()
     print '\tMean', suite.Mean()
+    print '\tVariance', suite.Var()
     print '\tMedian', thinkbayes.Percentile(suite, 50) 
     print '\t90% CI', thinkbayes.CredibleInterval(suite, 90)
     print '\n'
@@ -96,7 +108,7 @@ def PlotSuites(suites, root):
                    ylabel='Probability',
                    formats=['pdf', 'eps'])
 
-def main(error_prob, plot_priors = False):
+def main(error_prob, plot_priors = False, return_variances = False):
     # make the priors
     suite1 = UniformPrior()
     suite1.name = 'uniform'
@@ -105,8 +117,8 @@ def main(error_prob, plot_priors = False):
     suite2.name = 'triangle'
 
     if plot_priors:
-	    # plot the priors
-    	PlotSuites([suite1, suite2], 'prior_dists_{}'.format(error_prob))
+        # plot the priors
+        PlotSuites([suite1, suite2], 'prior_dists_{}'.format(error_prob))
 
     # update
     RunUpdate(suite1, error_prob)
@@ -122,9 +134,22 @@ def main(error_prob, plot_priors = False):
     PlotSuites([suite1, suite2], 'uniform_triangular_{}'.format(error_prob))
     print '-------------------\n'
 
+    if return_variances:
+        return suite1.Var(), suite2.Var()
+
 
 if __name__ == '__main__':
-	list_of_errs = [0, 0.05, 0.15, 0.45, 0.85]
-	for err in list_of_errs:
-		print "Assumed Measurement Error: {}".format(err)
-		main(err)
+    list_of_errs = np.linspace(0,0.9,10)
+    u_vars = []
+    t_vars = []
+    for err in list_of_errs:
+        print "Assumed Measurement Error: {}".format(err)
+        u_var, t_var = main(err, return_variances = True)
+        u_vars.append(u_var)
+        t_vars.append(t_var)
+
+    u_rho = np.corrcoef(list_of_errs, u_vars)[0,1]
+    print 'Corr. between error prob and uniform PMF var: {}'.format(u_rho)
+    
+    t_rho = np.corrcoef(list_of_errs, t_vars)[0,1]
+    print 'Corr. between error prob and triangle PMF var: {}'.format(t_rho)
