@@ -84,7 +84,6 @@ def Summarize(suite):
     """Prints summary statistics for the suite. Because the questions asks
     how the spread of the posterior distribution changes with the error
     rate, I'm also showing the variance"""
-    print '\tProbability of 50', suite.Prob(50)
     print '\tMLE', suite.MaximumLikelihood()
     print '\tMean', suite.Mean()
     print '\tVariance', suite.Var()
@@ -117,7 +116,6 @@ def main(error_prob, plot_priors = False, return_variances = False):
     suite2.name = 'triangle'
 
     if plot_priors:
-        # plot the priors
         PlotSuites([suite1, suite2], 'prior_dists_{}'.format(error_prob))
 
     # update
@@ -130,7 +128,6 @@ def main(error_prob, plot_priors = False, return_variances = False):
     Summarize(suite2)
 
     # plot the posteriors
-    # PlotSuites([suite1], 'uniform')
     PlotSuites([suite1, suite2], 'uniform_triangular_{}'.format(error_prob))
     print '-------------------\n'
 
