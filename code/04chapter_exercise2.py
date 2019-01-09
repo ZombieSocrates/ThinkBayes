@@ -1,9 +1,11 @@
 import thinkbayes
 import thinkplot
 
+import ipdb
+
 '''
 Redditors post links to online content and other web pages. Other redditors 
-vote on the links, giving an “upvote” to high-quality links and a “downvote” 
+vote on the links, giving an "upvote" to high-quality links and a "downvote" 
 to links that are bad or irrelevant. A problem is that some redditors are 
 more reliable than others, and Reddit does not take this into account.
 
@@ -18,10 +20,9 @@ probability of correctly giving an upvote to a high-quality item.
 
 Write class definitions for redditors and links and an update function that 
 updates both objects whenever a redditor casts a vote.
-'''       
 
+MY ANSWER: IN PROGRESS
 
-"""
 IDEA SO FAR:
 
 Model both users and links as beta distributions.
@@ -36,10 +37,13 @@ For users, you could have something similar with "correct votes" vs
 I had this half-formed idea of being able to update each object by 
 mutual addition. That is when a user with a,b votes on a link with c,d,
 the new "reliability parameters" would be a + c, b + d. The only trouble
-here is that we wouldn't want to add a high amount of unreliability to an
-valid article because a junky user votes on it.
+here is that ...
+	we wouldn't want to add a high amount of unreliability to an
+valid article because a junky user votes on it
+	we could have instances where people get caught in a = b and c = d
+scenarios
 
-There's some kind of type II error/ confusion matrix to take into account here,
+There's some kind of confusion matrix to take into account here,
 and I need to think about how a score would ideally change if
 
 	* A highly reliable user correctly votes (up or down) on an article
@@ -47,6 +51,36 @@ and I need to think about how a score would ideally change if
 	* A highly reliable user incorrectly votes
 	* A highly unreliable user incorrectly votes
 
+'''       
 
 
-"""   
+
+
+class RedditUser():
+
+	def __init__(self):
+		pass
+
+	def update(self):
+		pass
+
+
+class RedditLink():
+
+	def __init__(self):
+		self.quality_dist = thinkbayes.Beta()
+		self.upvotes = self.quality_dist.alpha
+		self.downvotes = self.quality_dist.beta
+
+
+if __name__ == "__main__":
+	a_link = RedditLink()
+	# At this point, you need to modify the
+	# quality dist attribute to simulate the act
+	# of upvoting and downvoting
+	ipdb.set_trace()
+
+
+
+
+
