@@ -1,6 +1,3 @@
-# import thinkbayes
-# import thinkplot
-
 import ipdb
 
 from random import uniform
@@ -38,11 +35,11 @@ cast according to the following four desired behaviors:
 
 	* A user casts an upvote on a "good" link: In this case, we want link 
 	quality to go up and user reliability to go up. This means that the link's 
-	quality_score and the user's good_karma both increase.
+	ham_score and the user's good_karma both increase.
 
 	* A user casts an upvote on a "bad" link: In this case, we want link 
 	quality to go up but user reliability to go down. This means the link's 
-	quality_score will go up, but the user's bad_karma will go up, too.
+	ham_score will go up, but the user's bad_karma will go up, too.
 
 	* A user casts a downvote on a "good" link: We want the link quality to 
 	go down and user reliability to go down as well. This means that the link's 
@@ -52,10 +49,10 @@ cast according to the following four desired behaviors:
 	down but user reliability to go up. This means that the link's spam_score 
 	will go up, but the user's good_karma goes up as a consequence.
 
-So any upvote will increase link quality_score to some degree, and any downvote 
+So any upvote will increase link ham_score to some degree, and any downvote 
 will increase link spam_score to some degree. To what degree, though? To a 
 degree proportional to the to the reliability of the user. AKA the update made
-to the link will be user_reliability * (quality_score OR spam_score).
+to the link will be user_reliability * (ham_score OR spam_score).
 
 The impact on the user is a little less direct, depending not only on the type 
 of vote but also on whether the link is "good" or "bad." For the time being, I
@@ -89,63 +86,81 @@ class RedditUser():
 		self.good_karma = self.reliability_dist.alpha
 		self.bad_karma = self.reliability_dist.beta
 
-	def get_user_reliability(self):
+	def get_reliability_score(self):
 		'''The estimated user reliability would be the mean of the beta 
-		distribution represented by its good_karma and bad_karma
+		distribution represented by its good_karma and bad_karma.
 		'''
 		return self.reliability_dist.Mean()
 
-	def make_vote_and_update(self, reddit_link, vote_type):
-		'''What link is this person voting on and is it an upvote or a down 
-		vote? 
+	def make_vote(self, reddit_link, vote_type):
+		'''Given a link being voted on, and the type of vote, this method does 
+		three things.
 
-		An upvote will always increase the link's plus score, while a downvote
-		will always add to the spam score. The degree to which this happens is
-		weighted by the user's reliability score. 
-
-		NO...STUPID...MAKE BASICALLY ALL OF THIS STUFF PART OF THE LINK OBJECT
-		V    V     V    V    V   
-		As it stands now, this method changes the quality distribution of the 
-		RedditLink object. The `update_user_from_vote` method handles all changes  
+			1. Freezes user_reliability and link reliability before the vote.
+			2. Updates the input link by calling the `process_vote` method.
+			3. Updates the user's good_karma or bad_karma attribute depending 
+			on whether the vote is "correct" or not.   
 		'''
 		if vote_type not in ["up","down"]:
 			raise NotImplementedError
-		user_factor = self.get_user_reliability()
-		vote_map = {"up":(reddit_link.quality_score * user_factor, 0),
-			"down":(0, reddit_link.spam_score * user_factor)}
-		reddit_link.quality_dist.Update(vote_map[vote_type])
-		reddit_link.quality_score = reddit_link.quality_dist.alpha
-		reddit_link.spam_score = reddit_link.quality_dist.beta
-
+		user_coef = self.get_reliability_score()
+		link_coef = reddit_link.get_quality_score()
+		reddit_link.process_vote(user_coef, vote_type)
+		false_positive = (vote_type == "up") & (link_coef < 0.5)
+		false_negative = (vote_type == "down") & (link_coef >= 0.5)
+		if false_positive or false_negative:
+			self.reliability_dist.Update((0, link_coef * self.bad_karma))
+		else:
+			self.reliability_dist.Update((link_coef * self.good_karma, 0))
+		self.good_karma = self.reliability_dist.alpha
+		self.bad_karma = self.reliability_dist.beta
 
 class RedditLink():
 
-	def __init__(self, quality_score = 1, spam_score = 1):
+	def __init__(self, ham_score = 1, spam_score = 1):
 		'''Might not be a way around this, but every time update is called
-		we would need to reset the quality_score and spam_score attribute. This
-		should be handled in the `update_from_vote` method.
+		we would need to reset the ham_score and spam_score attributes. This
+		should be handled in the `process_vote` method.
 		'''
-		if quality_score * spam_score == 0:
+		if ham_score * spam_score == 0:
 			raise ValueError("Neither quality parameter can be set to zero")
-		self.quality_dist = Beta(quality_score, spam_score)
-		self.quality_score = self.quality_dist.alpha
+		self.quality_dist = Beta(ham_score, spam_score)
+		self.ham_score = self.quality_dist.alpha
 		self.spam_score = self.quality_dist.beta
 
-	def get_link_quality(self):
+	def get_quality_score(self):
 		'''The estimated link quality would be the mean of the beta 
-		distribution represented by its quality_score and spam_score.
+		distribution represented by its ham_score and spam_score.
 		'''
 		return self.quality_dist.Mean()
 
-	def update_link_from_vote(self, reddit_user, vote_type):
-		'''What user is voting on this, and is it an upvote or a down vote? 
-		Still need to think about how the respective updates will happen.
+	def process_vote(self, reliability_score, vote_type):
+		'''Given a reliability_score from the user who made the vote and 
+		the type of the vote, this will update the link's underlying 
+		quality distribution and rebing the ham_score and spam_score 
+		attributes.
 		'''
-		print "WHEE"
+		vote_map = {"up":(self.ham_score * reliability_score, 0),
+			"down":(0, self.spam_score * reliability_score)}
+		self.quality_dist.Update(vote_map[vote_type])
+		self.ham_score = self.quality_dist.alpha
+		self.spam_score = self.quality_dist.beta
+
+def main():
+	pass
 
 if __name__ == "__main__":
-	a_quality_link = RedditLink(quality_score = 9, spam_score = 1)
+	# PLEASE MOVE THIS TO THE MAIN METHOD WITH MORE TESTS
+	a_quality_link = RedditLink(ham_score = 9, spam_score = 1)
 	a_reputable_user = RedditUser(good_karma = 5, bad_karma = 1)
+	ipdb.set_trace()
+	print "a reputable user upvotes a quality link"
+	print "both quality and reliability should go up"
+	a_reputable_user.make_vote(a_quality_link, "up")
+	ipdb.set_trace()
+	print "a reputable user downvotes the quality link"
+	print "both quality and reliability should go down"
+	a_reputable_user.make_vote(a_quality_link, "down")
 	ipdb.set_trace()
 
 
