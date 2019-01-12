@@ -63,10 +63,12 @@ will consider any link with estimated quality >= 0.5 "good".
 	* Incorrect votes (down on "good", up on "bad") increase the user's 
 	bad_karma proportional to the quality of the link 
 
-TKTK 1: Need to actually test the four scenarios in the main method
+TKTK 1: Wonder what would happen if we started with a group of uniform
+users and uniform links (alpha = beta = 1) and just let votes happen?
+
 TKTK 2: Could the we add user good_karma and bad_karma values to links
 and add link quality and spam scores to the users in order to make these 
-updates, instead of just multiplying.
+updates, instead of just multiplying by an attrbute of the link/user?
 '''       
 
 
@@ -74,17 +76,20 @@ updates, instead of just multiplying.
 
 class RedditUser():
 
-	def __init__(self, good_karma = 1, bad_karma = 1):
+	def __init__(self, good_karma = 1, bad_karma = 1, username = ""):
 		'''Create each user's underlying beta distribution, paramaterized by 
-		their good_karma and bad_karma score. Might not be a way around this, 
-		but every time update is called we would need to reset the good_karma 
-		and bad_karma attributes.
+		their good_karma and bad_karma. Optional username argument is just to 
+		play nicely with the `assess_voting_behavior` testing function
+
+		Might not be a way around this, but every time `make_vote` is called we 
+		need to reset the good_karma and bad_karma attributes.
 		'''
 		if good_karma * bad_karma == 0:
 			raise ValueError("Neither user parameter can be set to zero")
 		self.reliability_dist = Beta(good_karma, bad_karma)
 		self.good_karma = self.reliability_dist.alpha
 		self.bad_karma = self.reliability_dist.beta
+		self.name = username
 
 	def get_reliability_score(self):
 		'''The estimated user reliability would be the mean of the beta 
@@ -117,16 +122,21 @@ class RedditUser():
 
 class RedditLink():
 
-	def __init__(self, ham_score = 1, spam_score = 1):
-		'''Might not be a way around this, but every time update is called
-		we would need to reset the ham_score and spam_score attributes. This
-		should be handled in the `process_vote` method.
+	def __init__(self, ham_score = 1, spam_score = 1, linkname = ""):
+		'''Create each link's underlying beta distribution, paramaterized by 
+		it's ham_score and spam_score. Optional username argument is 
+		just to play nicely with the `assess_voting_behavior` testing function
+
+		Might not be a way around this, but every time `process_vote` is called 
+		we need to reset the ham and spam attributes.
 		'''
 		if ham_score * spam_score == 0:
 			raise ValueError("Neither quality parameter can be set to zero")
 		self.quality_dist = Beta(ham_score, spam_score)
 		self.ham_score = self.quality_dist.alpha
 		self.spam_score = self.quality_dist.beta
+		self.name = linkname
+
 
 	def get_quality_score(self):
 		'''The estimated link quality would be the mean of the beta 
@@ -146,71 +156,35 @@ class RedditLink():
 		self.ham_score = self.quality_dist.alpha
 		self.spam_score = self.quality_dist.beta
 
+def assess_voting_behavior(user, link, vote_type):
+	'''Given a user, a link, and a type of vote, displays the user 
+	reliability and link quality scores before and after the vote
+	'''
+	print "A {} user {}votes a {} link".format(user.name, vote_type, link.name)
+	u_0 = user.get_reliability_score()
+	l_0 = link.get_quality_score()
+	user.make_vote(link, vote_type)
+	u_1 = user.get_reliability_score()
+	l_1 = link.get_quality_score()
+	print "User reliability goes from {:.3f} to {:.3f}".format(u_0, u_1)
+	print "Link quality goes from {:.3f} to {:.3f}".format(l_0, l_1)
+	print "-------\n"
+
 def main():
-	good_user = RedditUser(good_karma = 5, bad_karma = 1)
-	troll_user = RedditUser(good_karma = 1, bad_karma = 5)
-	new_user = RedditUser()
+	good_user = RedditUser(good_karma = 5, bad_karma = 1, username = "good")
+	troll_user = RedditUser(good_karma = 1, bad_karma = 5, username = "troll")
+	n00b_user = RedditUser(username = "n00b")
 
-	great_link = RedditLink(ham_score = 5, spam_score = 1)
-	crappy_link = RedditLink(ham_score = 1, spam_score = 5)
-	new_link = RedditLink()
-	# This can be wrapped into some kind of `assess_vote` function
-	print "a good user upvotes a great link"
-	print "reliability and quality both go up"
-	print "user before: {:.5f}".format(good_user.get_reliability_score())
-	print "link before: {:.5f}".format(great_link.get_quality_score())
-	good_user.make_vote(great_link, "up")
-	print "user after: {:.5f}".format(good_user.get_reliability_score())
-	print "link after: {:.5f}".format(great_link.get_quality_score())
-	print "---------"
-	# END HILARIOUS FUNCTION
-	ipdb.set_trace()
-	print "a troll user upvotes a crappy link"
-	print "reliability goes down, quality goes up"
-	print "user before: {:.5f}".format(troll_user.get_reliability_score())
-	print "link before: {:.5f}".format(crappy_link.get_quality_score())
-	troll_user.make_vote(crappy_link, "up")
-	print "user after: {:.5f}".format(troll_user.get_reliability_score())
-	print "link after: {:.5f}".format(crappy_link.get_quality_score())
-	print "---------"
-	ipdb.set_trace()
-	print "a new user upvotes a new link"
-	print "reliability and quality both go up"
-	print "user before: {:.5f}".format(new_user.get_reliability_score())
-	print "link before: {:.5f}".format(new_link.get_quality_score())
-	new_user.make_vote(new_link, "up")
-	print "user after: {:.5f}".format(new_user.get_reliability_score())
-	print "link after: {:.5f}".format(new_link.get_quality_score())
-	print "---------"
-	ipdb.set_trace()
-	print "a new user downvotes a crappy link"
-	print "reliability goes up, quality goes down"
-	print "user before: {:.5f}".format(new_user.get_reliability_score())
-	print "link before: {:.5f}".format(crappy_link.get_quality_score())
-	new_user.make_vote(crappy_link, "down")
-	print "user after: {:.5f}".format(new_user.get_reliability_score())
-	print "link after: {:.5f}".format(crappy_link.get_quality_score())
-	print "---------"
-	ipdb.set_trace()
-	print "a good user downvotes a new link"
-	print "reliability and quality go down"
-	print "user before: {:.5f}".format(good_user.get_reliability_score())
-	print "link before: {:.5f}".format(new_link.get_quality_score())
-	good_user.make_vote(new_link, "down")
-	print "user after: {:.5f}".format(good_user.get_reliability_score())
-	print "link after: {:.5f}".format(new_link.get_quality_score())
-	print "---------"
-	ipdb.set_trace()
-	print "a troll user downvotes a new link"
-	print "reliability goes up, but quality goes down"
-	print "user before: {:.5f}".format(troll_user.get_reliability_score())
-	print "link before: {:.5f}".format(new_link.get_quality_score())
-	troll_user.make_vote(new_link, "down")
-	print "user after: {:.5f}".format(troll_user.get_reliability_score())
-	print "link after: {:.5f}".format(new_link.get_quality_score())
-	print "---------"
-	ipdb.set_trace()
+	great_link = RedditLink(ham_score = 5, spam_score = 1, linkname = "great")
+	crap_link = RedditLink(ham_score = 1, spam_score = 5, linkname = "crap")
+	new_link = RedditLink(linkname = "new")
 
+	assess_voting_behavior(good_user, great_link, "up")
+	assess_voting_behavior(troll_user, crap_link, "up")
+	assess_voting_behavior(n00b_user, new_link, "up")
+	assess_voting_behavior(n00b_user, crap_link, "down")
+	assess_voting_behavior(good_user, new_link, "down")
+	assess_voting_behavior(troll_user, new_link, "down")
 
 if __name__ == "__main__":
 	main()
