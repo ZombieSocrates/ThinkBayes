@@ -137,7 +137,7 @@ class RedditLink():
 	def process_vote(self, reliability_score, vote_type):
 		'''Given a reliability_score from the user who made the vote and 
 		the type of the vote, this will update the link's underlying 
-		quality distribution and rebing the ham_score and spam_score 
+		quality distribution and rebind the ham_score and spam_score 
 		attributes.
 		'''
 		vote_map = {"up":(self.ham_score * reliability_score, 0),
@@ -147,21 +147,73 @@ class RedditLink():
 		self.spam_score = self.quality_dist.beta
 
 def main():
-	pass
+	good_user = RedditUser(good_karma = 5, bad_karma = 1)
+	troll_user = RedditUser(good_karma = 1, bad_karma = 5)
+	new_user = RedditUser()
+
+	great_link = RedditLink(ham_score = 5, spam_score = 1)
+	crappy_link = RedditLink(ham_score = 1, spam_score = 5)
+	new_link = RedditLink()
+	# This can be wrapped into some kind of `assess_vote` function
+	print "a good user upvotes a great link"
+	print "reliability and quality both go up"
+	print "user before: {:.5f}".format(good_user.get_reliability_score())
+	print "link before: {:.5f}".format(great_link.get_quality_score())
+	good_user.make_vote(great_link, "up")
+	print "user after: {:.5f}".format(good_user.get_reliability_score())
+	print "link after: {:.5f}".format(great_link.get_quality_score())
+	print "---------"
+	# END HILARIOUS FUNCTION
+	ipdb.set_trace()
+	print "a troll user upvotes a crappy link"
+	print "reliability goes down, quality goes up"
+	print "user before: {:.5f}".format(troll_user.get_reliability_score())
+	print "link before: {:.5f}".format(crappy_link.get_quality_score())
+	troll_user.make_vote(crappy_link, "up")
+	print "user after: {:.5f}".format(troll_user.get_reliability_score())
+	print "link after: {:.5f}".format(crappy_link.get_quality_score())
+	print "---------"
+	ipdb.set_trace()
+	print "a new user upvotes a new link"
+	print "reliability and quality both go up"
+	print "user before: {:.5f}".format(new_user.get_reliability_score())
+	print "link before: {:.5f}".format(new_link.get_quality_score())
+	new_user.make_vote(new_link, "up")
+	print "user after: {:.5f}".format(new_user.get_reliability_score())
+	print "link after: {:.5f}".format(new_link.get_quality_score())
+	print "---------"
+	ipdb.set_trace()
+	print "a new user downvotes a crappy link"
+	print "reliability goes up, quality goes down"
+	print "user before: {:.5f}".format(new_user.get_reliability_score())
+	print "link before: {:.5f}".format(crappy_link.get_quality_score())
+	new_user.make_vote(crappy_link, "down")
+	print "user after: {:.5f}".format(new_user.get_reliability_score())
+	print "link after: {:.5f}".format(crappy_link.get_quality_score())
+	print "---------"
+	ipdb.set_trace()
+	print "a good user downvotes a new link"
+	print "reliability and quality go down"
+	print "user before: {:.5f}".format(good_user.get_reliability_score())
+	print "link before: {:.5f}".format(new_link.get_quality_score())
+	good_user.make_vote(new_link, "down")
+	print "user after: {:.5f}".format(good_user.get_reliability_score())
+	print "link after: {:.5f}".format(new_link.get_quality_score())
+	print "---------"
+	ipdb.set_trace()
+	print "a troll user downvotes a new link"
+	print "reliability goes up, but quality goes down"
+	print "user before: {:.5f}".format(troll_user.get_reliability_score())
+	print "link before: {:.5f}".format(new_link.get_quality_score())
+	troll_user.make_vote(new_link, "down")
+	print "user after: {:.5f}".format(troll_user.get_reliability_score())
+	print "link after: {:.5f}".format(new_link.get_quality_score())
+	print "---------"
+	ipdb.set_trace()
+
 
 if __name__ == "__main__":
-	# PLEASE MOVE THIS TO THE MAIN METHOD WITH MORE TESTS
-	a_quality_link = RedditLink(ham_score = 9, spam_score = 1)
-	a_reputable_user = RedditUser(good_karma = 5, bad_karma = 1)
-	ipdb.set_trace()
-	print "a reputable user upvotes a quality link"
-	print "both quality and reliability should go up"
-	a_reputable_user.make_vote(a_quality_link, "up")
-	ipdb.set_trace()
-	print "a reputable user downvotes the quality link"
-	print "both quality and reliability should go down"
-	a_reputable_user.make_vote(a_quality_link, "down")
-	ipdb.set_trace()
+	main()
 
 
 
