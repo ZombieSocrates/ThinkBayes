@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('PDF')
 import thinkbayes
 import thinkplot
 

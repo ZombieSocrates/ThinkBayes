@@ -14,7 +14,8 @@ of companies. What's the probability that we see N = 60
 My answer as of right now is that this just reduces back to
 the uniform case. 
 """
-
+import matplotlib
+matplotlib.use('PDF')
 import thinkbayes
 import thinkplot
 import ipdb
